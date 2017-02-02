@@ -11,11 +11,12 @@
 //initiate vars
 LiquidCrystal lcd(2, 3, 4, 5, 6, 7); 
 
-bool alarm_on=false;
+bool alarm_on=true;
 bool backlight_on=true;
 bool lights_on=false;
+bool alarm_active=false;
 
-int pin_backlight=1;
+int pin_backlight=12;
 int pin_btn1=8; //mode
 int pin_btn2=9; //alarm on/off, lights on/off, increment
 int pin_btn3=10; //backlight on/off, select value to edit
@@ -54,7 +55,7 @@ void setup() {
   digitalWrite(pin_backlight, HIGH);
  
   //get time from computer if connected
-  
+  Serial.begin(9600);
   
   //set exponential rate of lights turning on
   R = (alarm_lenght * log10(2))/(log10(255));
@@ -75,7 +76,7 @@ void loop() {
   }
 
   //set lights
-  if (lights_on) {
+  if (lights_on && alarm_active==false) {
     analogWrite(pin_lights, 255);
   } else {
     analogWrite(pin_lights, 0);
@@ -159,10 +160,16 @@ void check_alarm() {
 
   //if it's still alarm time, set the light to correct intensity
   //ramping up from 0 to full brightness over alarm_lenght minutes
-  if (min_since_alarm<=alarm_lenght) {
+  if (min_since_alarm<=alarm_lenght && min_since_alarm>=0 && alarm_on==true) {
     int brightness = pow (2, (min_since_alarm / R)) - 1;
     analogWrite(pin_lights, brightness);
-    backlight_on=true;
+    backlight_on = true;
+    alarm_active = true;
+    lights_on = true;
+    Serial.println("alarm");
+    Serial.println(brightness);
+  } else {
+    alarm_active=false;
   }
 
 }
